@@ -18,6 +18,7 @@ public class CombiningPublishersBase {
     AtomicBoolean fileOpened = new AtomicBoolean(false);
     AtomicBoolean writtenToFile = new AtomicBoolean(false);
     AtomicBoolean fileClosed = new AtomicBoolean(false);
+    AtomicInteger executedTasksCounter = new AtomicInteger(0);
     AtomicInteger committedTasksCounter = new AtomicInteger(0);
 
     public Mono<String> getCurrentUser() {
@@ -144,6 +145,7 @@ public class CombiningPublishersBase {
     public Flux<Mono<String>> tasksToExecute() {
         return Flux.range(1, 3)
                    .map(i -> Mono.fromSupplier(() -> {
+                                     executedTasksCounter.incrementAndGet();
                                      System.out.println("Executing task: #" + i);
                                      return "task#" + i;
                                  })
@@ -152,8 +154,10 @@ public class CombiningPublishersBase {
     }
 
     public Mono<Void> commitTask(String taskId) {
-        committedTasksCounter.incrementAndGet();
-        return Mono.fromRunnable(() -> System.out.println("Task committed:" + taskId));
+        return Mono.fromRunnable(() -> {
+            committedTasksCounter.incrementAndGet();
+            System.out.println("Task committed:" + taskId);
+        });
     }
 
     public Flux<String> microsoftTitles() {
